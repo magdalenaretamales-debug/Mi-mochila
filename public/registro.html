@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Mochila | Crear mi cuenta</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="login">
+    <section class="login-tarjeta">
+      <div class="login-logo">
+    <img src="/img/logoM.png" alt="Logo Mi Mochila">
+</div>
+
+      <h1>Crear mi cuenta</h1>
+
+      <p class="login-subtitulo">
+        ¡Qué bueno que estés aquí! 🌟<br>
+        Crea tu cuenta para comenzar a organizar tu mochila.
+      </p>
+
+      <form id="formRegistro">
+        <label for="registroNombre">😊 ¿Cómo te llamas?</label>
+        <input
+          type="text"
+          id="registroNombre"
+          name="nombre"
+          placeholder="Escribe tu nombre"
+          autocomplete="name"
+          required
+        >
+
+        <label for="registroEmail">📧 Tu correo electrónico</label>
+        <input
+          type="email"
+          id="registroEmail"
+          name="email"
+          placeholder="Escribe tu correo"
+          autocomplete="email"
+          required
+        >
+
+        <label for="registroPassword">🔑 Crea una contraseña</label>
+        <input
+          type="password"
+          id="registroPassword"
+          name="password"
+          placeholder="Crea tu contraseña"
+          autocomplete="new-password"
+          required
+        >
+
+        <p class="texto-contrasena">Tu contraseña debe tener:</p>
+
+        <ul class="reglas-contrasena">
+          <li>Mínimo 8 caracteres</li>
+          <li>Una letra mayúscula</li>
+          <li>Una letra minúscula</li>
+          <li>Un número</li>
+          <li>Un carácter especial</li>
+        </ul>
+
+        <label for="confirmarPassword">🔒 Confirma tu contraseña</label>
+        <input
+          type="password"
+          id="confirmarPassword"
+          name="confirmarPassword"
+          placeholder="Repite tu contraseña"
+          autocomplete="new-password"
+          required
+        >
+
+        <p id="mensajeRegistro" role="status" aria-live="polite"></p>
+
+        <button type="submit" id="btnRegistro">
+          Crear mi cuenta ✨
+        </button>
+      </form>
+
+      <p class="login-subtitulo">
+        ¿Ya tienes una cuenta?
+        <a href="/login.html">Inicia sesión</a>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const formulario = document.getElementById("formRegistro");
+    const mensaje = document.getElementById("mensajeRegistro");
+    const boton = document.getElementById("btnRegistro");
+
+    formulario.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const nombre = document.getElementById("registroNombre").value.trim();
+      const email = document.getElementById("registroEmail").value.trim().toLowerCase();
+      const password = document.getElementById("registroPassword").value;
+      const confirmarPassword = document.getElementById("confirmarPassword").value;
+
+      mensaje.textContent = "";
+      mensaje.style.color = "#c0392b";
+
+      if (!nombre) {
+        mensaje.textContent = "Ingresa tu nombre.";
+        return;
+      }
+
+      if (password !== confirmarPassword) {
+        mensaje.textContent = "Las contraseñas no coinciden.";
+        return;
+      }
+
+      const passwordValida =
+        password.length >= 8 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[^A-Za-z0-9]/.test(password);
+
+      if (!passwordValida) {
+        mensaje.textContent =
+          "La contraseña debe tener 8 caracteres, mayúscula, minúscula, número y carácter especial.";
+        return;
+      }
+
+      boton.disabled = true;
+      boton.textContent = "Creando tu cuenta...";
+
+      try {
+        const respuesta = await fetch("/registro", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            nombre: nombre,
+            email: email,
+            password: password
+          })
+        });
+
+        const datos = await respuesta.json();
+
+        if (!respuesta.ok) {
+          mensaje.textContent =
+            datos.message || "No se pudo crear la cuenta.";
+          return;
+        }
+
+        mensaje.style.color = "#218838";
+        mensaje.textContent =
+          datos.message || "Cuenta creada correctamente.";
+
+        formulario.reset();
+
+        setTimeout(function () {
+          window.location.href = "/login.html";
+        }, 1500);
+
+      } catch (error) {
+        console.error("Error al registrar:", error);
+        mensaje.textContent =
+          "No se pudo conectar con el servidor. Comprueba que esté funcionando.";
+      } finally {
+        boton.disabled = false;
+        boton.textContent = "Crear mi cuenta ✨";
+      }
+    });
+  </script>
+
+  <footer class="pie-pagina">
+    <p>Desarrollado con 💜 por <strong>María Magdalena Retamales</strong></p>
+    <p>© 2026 Mi Mochila</p>
+</footer>
+</body>
+</html>

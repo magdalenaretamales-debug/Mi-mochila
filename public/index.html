@@ -1,0 +1,762 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Mochila 🎒</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<main class="contenedor">
+
+    <header class="encabezado">
+        <div class="marca">
+            <div class="icono-mochila">
+                <img src="/img/logoM.png" alt="Logo Mi Mochila">
+            </div>
+            <div>
+                <h1>Mi Mochila</h1>
+                <p>Organiza tus tareas y prepárate para el colegio ✨</p>
+            </div>
+        </div>
+        <button type="button" id="btnCerrarSesion">🚪 Salir</button>
+    </header>
+
+    <section class="tarjeta bienvenida">
+        <h2 id="saludoUsuario">👋 ¡Hola!</h2>
+        <p>Qué bueno verte 😊<br>Aquí puedes organizar tus tareas y prepararte con tiempo.</p>
+    </section>
+
+    <div class="contenido">
+        <div class="columna-principal">
+
+            <!-- MIS TAREAS -->
+            <section class="tarjeta">
+                <h2>📚 Mis tareas</h2>
+                <p>¿Qué tienes que hacer?</p>
+
+                <form id="formTarea">
+                    <label for="tarea">✏️ Tarea</label>
+                    <input type="text" id="tarea"
+                        placeholder="Ej: Resolver ejercicios de Matemática" required>
+
+                    <label for="fechaTarea">📅 ¿Para cuándo?</label>
+                    <input type="date" id="fechaTarea" required>
+
+                    <label for="prioridad">⭐ ¿Qué tan importante es?</label>
+                    <select id="prioridad" required>
+                        <option value="">Selecciona una opción</option>
+                        <option value="alta">🔴 Muy importante</option>
+                        <option value="media">🟡 Importante</option>
+                        <option value="baja">🟢 Puede esperar</option>
+                    </select>
+
+                    <button type="submit">➕ Agregar tarea</button>
+                </form>
+
+                <div id="resultadoTarea" aria-live="polite"></div>
+
+                <h3 class="titulo-lista">📝 Mis tareas pendientes</h3>
+                <div id="listaTareas" class="lista-tareas">
+                    <p class="sin-tareas">Todavía no tienes tareas. ¡Agrega la primera! ✨</p>
+                </div>
+            </section>
+
+            <!-- ORGANIZAR LA SEMANA -->
+            <section class="tarjeta">
+                <h2>📅 Organiza tu semana</h2>
+                <p>Elige qué quieres revisar.</p>
+
+                <div class="filtros-tareas">
+                    <button type="button" id="btnHoy">🌟 Hoy</button>
+                    <button type="button" id="btnSemana">📚 Esta semana</button>
+                    <button type="button" id="btnCompletadas">✅ Completadas</button>
+                </div>
+
+                <div id="mensajeTareas" class="mensaje" aria-live="polite">
+                    Selecciona una opción para revisar tus tareas.
+                </div>
+            </section>
+        </div>
+
+        <!-- COLUMNA LATERAL -->
+        <aside class="columna-lateral">
+
+            <!-- MI MOCHILA -->
+            <section class="tarjeta">
+                <h2>🎒 ¿Qué necesito llevar?</h2>
+                <p>Agrega todo lo que necesitas para tu día de clases.</p>
+
+                <form id="formMochila">
+                    <label for="nuevoMaterial">✏️ ¿Qué necesitas llevar?</label>
+                    <input type="text" id="nuevoMaterial"
+                        placeholder="Ej: Cuaderno de Matemática"
+                        maxlength="100" required>
+                    <button type="submit" class="btn-agregar-material">
+                        ➕ Agregar a mi mochila
+                    </button>
+                </form>
+
+                <p id="resultadoMochila" aria-live="polite"></p>
+                <div id="listaMochila" class="lista-mochila"></div>
+            </section>
+
+            <!-- MIS ARCHIVOS -->
+            <section class="tarjeta">
+                <h2>📎 Mis archivos</h2>
+                <p>Guarda una guía, tarea o imagen que necesites para el colegio.</p>
+
+                <form id="formUpload">
+                    <label for="archivo">📁 Elige un archivo</label>
+                    <input type="file" id="archivo"
+                        accept=".jpg,.jpeg,.png,.pdf" required>
+
+                    <label for="nombreArchivo">✏️ Nombre del archivo</label>
+                    <input type="text" id="nombreArchivo"
+                        placeholder="Ej: Guía de Matemática" maxlength="255">
+
+                    <p>Puedes subir JPG, JPEG, PNG o PDF.<br>Tamaño máximo: 5 MB.</p>
+                    <button type="submit">📤 Subir archivo</button>
+                </form>
+
+                <div id="resultadoUpload" aria-live="polite"></div>
+                <h3 class="titulo-lista">📂 Mis archivos guardados</h3>
+                <div id="listaArchivos" class="lista-mochila"></div>
+            </section>
+
+            <section class="tarjeta mensaje-final">
+                <h2>🌟 ¡Tú puedes!</h2>
+                <p>Organizar tus tareas te ayuda a trabajar con más tranquilidad y tener tiempo para descansar.</p>
+            </section>
+        </aside>
+    </div>
+</main>
+
+<script>
+"use strict";
+
+// ==========================================
+// SESIÓN Y USUARIO
+// ==========================================
+const token = localStorage.getItem("token");
+const usuarioGuardado = localStorage.getItem("usuario");
+
+if (!token || !usuarioGuardado) {
+    window.location.href = "login.html";
+}
+
+let usuarioActual = {};
+
+try {
+    usuarioActual = JSON.parse(usuarioGuardado || "{}");
+    document.getElementById("saludoUsuario").textContent =
+        `👋 ¡Hola, ${usuarioActual.nombre || "estudiante"}!`;
+} catch (error) {
+    console.error("Error al leer el usuario:", error);
+}
+
+document.getElementById("btnCerrarSesion").addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    window.location.href = "login.html";
+});
+
+// ==========================================
+// TAREAS: GUARDAR, MOSTRAR, EDITAR Y ELIMINAR
+// ==========================================
+const listaTareas = document.getElementById("listaTareas");
+const formTarea = document.getElementById("formTarea");
+const resultadoTarea = document.getElementById("resultadoTarea");
+
+let tareas = JSON.parse(localStorage.getItem("misTareas") || "[]");
+
+function guardarTareas() {
+    localStorage.setItem("misTareas", JSON.stringify(tareas));
+}
+
+function mostrarTareas() {
+    listaTareas.innerHTML = "";
+
+    const pendientes = tareas.filter(item => !item.completada);
+
+    if (pendientes.length === 0) {
+        listaTareas.innerHTML =
+            '<p class="sin-tareas">No tienes tareas pendientes. ¡Buen trabajo! ✨</p>';
+    }
+
+    tareas.forEach(item => {
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "tarea";
+
+        if (item.completada) {
+            tarjeta.classList.add("completada");
+        }
+
+        const informacion = document.createElement("div");
+        informacion.className = "tarea-info";
+
+        const nombre = document.createElement("h4");
+        nombre.textContent = item.nombre;
+
+        const fecha = document.createElement("p");
+        fecha.textContent = `📅 ${item.fecha}`;
+
+        const prioridad = document.createElement("p");
+        prioridad.textContent = {
+            alta: "🔴 Muy importante",
+            media: "🟡 Importante",
+            baja: "🟢 Puede esperar"
+        }[item.prioridad] || "";
+
+        informacion.append(nombre, fecha, prioridad);
+
+        const acciones = document.createElement("div");
+        acciones.className = "acciones-tarea";
+
+        // Marcar tarea como completada
+        const etiqueta = document.createElement("label");
+        const casilla = document.createElement("input");
+        casilla.type = "checkbox";
+        casilla.checked = Boolean(item.completada);
+
+        casilla.addEventListener("change", () => {
+            item.completada = casilla.checked;
+            guardarTareas();
+            mostrarTareas();
+            actualizarResumenVisible();
+        });
+
+        etiqueta.append(casilla, document.createTextNode(" Completada"));
+
+        // Editar tarea
+        const editar = document.createElement("button");
+        editar.type = "button";
+        editar.textContent = "✏️ Editar";
+        editar.className = "btn-editar-tarea";
+
+        editar.addEventListener("click", () => {
+            const nuevoNombre = prompt("Nombre de la tarea:", item.nombre);
+            if (nuevoNombre === null) return;
+
+            if (!nuevoNombre.trim()) {
+                alert("El nombre no puede quedar vacío.");
+                return;
+            }
+
+            const nuevaFecha = prompt("Fecha (AAAA-MM-DD):", item.fecha);
+            if (nuevaFecha === null) return;
+
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)) {
+                alert("Ingresa la fecha con formato AAAA-MM-DD.");
+                return;
+            }
+
+            const fechaComprobacion = new Date(nuevaFecha + "T00:00:00");
+            if (Number.isNaN(fechaComprobacion.getTime()) ||
+                fechaComprobacion.toISOString().slice(0, 10) !== nuevaFecha) {
+                alert("La fecha ingresada no es válida.");
+                return;
+            }
+
+            const nuevaPrioridad = prompt(
+                "Prioridad: alta, media o baja",
+                item.prioridad
+            );
+            if (nuevaPrioridad === null) return;
+
+            const prioridadLimpia = nuevaPrioridad.trim().toLowerCase();
+
+            if (!["alta", "media", "baja"].includes(prioridadLimpia)) {
+                alert("Escribe alta, media o baja.");
+                return;
+            }
+
+            item.nombre = nuevoNombre.trim();
+            item.fecha = nuevaFecha;
+            item.prioridad = prioridadLimpia;
+
+            guardarTareas();
+            mostrarTareas();
+            actualizarResumenVisible();
+        });
+
+        // Eliminar tarea
+        const borrar = document.createElement("button");
+        borrar.type = "button";
+        borrar.textContent = "🗑️ Borrar";
+        borrar.className = "btn-eliminar-tarea";
+
+        borrar.addEventListener("click", () => {
+            if (!confirm(`¿Quieres borrar "${item.nombre}"?`)) return;
+
+            tareas = tareas.filter(t => t.id !== item.id);
+            guardarTareas();
+            mostrarTareas();
+            actualizarResumenVisible();
+        });
+
+        acciones.append(etiqueta, editar, borrar);
+        tarjeta.append(informacion, acciones);
+        listaTareas.appendChild(tarjeta);
+    });
+}
+
+// ==========================================
+// ORGANIZAR LA SEMANA: FILTROS
+// ==========================================
+const btnHoy = document.getElementById("btnHoy");
+const btnSemana = document.getElementById("btnSemana");
+const btnCompletadas = document.getElementById("btnCompletadas");
+const mensajeTareas = document.getElementById("mensajeTareas");
+
+let filtroActual = null;
+
+function fechaISOlocal(fecha) {
+    const anio = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+    const dia = String(fecha.getDate()).padStart(2, "0");
+    return `${anio}-${mes}-${dia}`;
+}
+
+function mostrarResumenTareas(tipo) {
+    filtroActual = tipo;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let filtradas = [];
+    let titulo = "";
+
+    if (tipo === "hoy") {
+        const fechaHoy = fechaISOlocal(hoy);
+
+        filtradas = tareas.filter(tarea =>
+            tarea.fecha === fechaHoy && !tarea.completada
+        );
+        titulo = "🌟 Tareas pendientes para hoy";
+
+    } else if (tipo === "semana") {
+        const lunes = new Date(hoy);
+        const dia = hoy.getDay();
+        lunes.setDate(hoy.getDate() + (dia === 0 ? -6 : 1 - dia));
+
+        const domingo = new Date(lunes);
+        domingo.setDate(lunes.getDate() + 6);
+
+        const fechaLunes = fechaISOlocal(lunes);
+        const fechaDomingo = fechaISOlocal(domingo);
+
+        filtradas = tareas.filter(tarea =>
+            tarea.fecha >= fechaLunes &&
+            tarea.fecha <= fechaDomingo &&
+            !tarea.completada
+        );
+        titulo = "📚 Tareas pendientes de esta semana";
+
+    } else if (tipo === "completadas") {
+        filtradas = tareas.filter(tarea => tarea.completada);
+        titulo = "✅ Tareas completadas";
+    }
+
+    mensajeTareas.innerHTML = "";
+
+    const encabezado = document.createElement("h4");
+    encabezado.textContent = titulo;
+    mensajeTareas.appendChild(encabezado);
+
+    if (filtradas.length === 0) {
+        const mensaje = document.createElement("p");
+        mensaje.textContent = tipo === "completadas"
+            ? "Todavía no has completado ninguna tarea."
+            : "No tienes tareas para mostrar en este período. ✨";
+        mensajeTareas.appendChild(mensaje);
+        return;
+    }
+
+    const lista = document.createElement("ul");
+
+    filtradas.forEach(tarea => {
+        const elemento = document.createElement("li");
+        elemento.textContent =
+            `${tarea.completada ? "✅" : "📌"} ${tarea.nombre} — ${tarea.fecha}`;
+        lista.appendChild(elemento);
+    });
+
+    mensajeTareas.appendChild(lista);
+}
+
+function actualizarResumenVisible() {
+    if (filtroActual) {
+        mostrarResumenTareas(filtroActual);
+    }
+}
+
+btnHoy.addEventListener("click", () => mostrarResumenTareas("hoy"));
+btnSemana.addEventListener("click", () => mostrarResumenTareas("semana"));
+btnCompletadas.addEventListener("click", () => mostrarResumenTareas("completadas"));
+
+// ==========================================
+// AGREGAR TAREA
+// ==========================================
+formTarea.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const nombre = document.getElementById("tarea").value.trim();
+    const fecha = document.getElementById("fechaTarea").value;
+    const prioridad = document.getElementById("prioridad").value;
+
+    if (!nombre || !fecha || !prioridad) {
+        resultadoTarea.textContent = "❌ Completa todos los campos.";
+        return;
+    }
+
+    tareas.push({
+        id: Date.now().toString() + Math.random().toString(16).slice(2),
+        nombre,
+        fecha,
+        prioridad,
+        completada: false
+    });
+
+    guardarTareas();
+    mostrarTareas();
+    actualizarResumenVisible();
+
+    resultadoTarea.textContent = "🌟 ¡Tarea agregada correctamente!";
+    formTarea.reset();
+});
+
+mostrarTareas();
+
+// ==========================================
+// MIS ARCHIVOS
+// ==========================================
+const formUpload = document.getElementById("formUpload");
+const inputArchivo = document.getElementById("archivo");
+const inputNombreArchivo = document.getElementById("nombreArchivo");
+const resultadoUpload = document.getElementById("resultadoUpload");
+const listaArchivos = document.getElementById("listaArchivos");
+
+async function cargarArchivos() {
+    listaArchivos.textContent = "Cargando archivos...";
+
+    try {
+        const response = await fetch("/archivos", {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const respuesta = await response.json();
+
+        if (!response.ok) {
+            throw new Error(respuesta.message || "No se pudieron cargar los archivos.");
+        }
+
+        const archivos = respuesta.data || [];
+        listaArchivos.innerHTML = "";
+
+        if (archivos.length === 0) {
+            listaArchivos.textContent = "Todavía no tienes archivos guardados. 📂";
+            return;
+        }
+
+        archivos.forEach(archivo => {
+            const elemento = document.createElement("article");
+            elemento.className = "material-mochila";
+
+            const informacion = document.createElement("div");
+            const nombre = document.createElement("strong");
+            nombre.textContent = archivo.nombre;
+
+            const tipo = document.createElement("p");
+            tipo.textContent = archivo.tipo === "application/pdf" ? "📄 PDF" : "🖼️ Imagen";
+            informacion.append(nombre, tipo);
+
+            const acciones = document.createElement("div");
+
+            const botonVer = document.createElement("button");
+            botonVer.type = "button";
+            botonVer.textContent = "👁️ Ver";
+            botonVer.addEventListener("click", () => abrirArchivo(archivo.id, false));
+
+            const botonDescargar = document.createElement("button");
+            botonDescargar.type = "button";
+            botonDescargar.textContent = "⬇️ Descargar";
+            botonDescargar.addEventListener("click", () => abrirArchivo(archivo.id, true));
+
+            const botonRenombrar = document.createElement("button");
+            botonRenombrar.type = "button";
+            botonRenombrar.textContent = "✏️ Renombrar";
+            botonRenombrar.addEventListener("click", () => renombrarArchivo(archivo));
+
+            const botonEliminar = document.createElement("button");
+            botonEliminar.type = "button";
+            botonEliminar.textContent = "🗑️ Eliminar";
+            botonEliminar.addEventListener("click", () => eliminarArchivo(archivo));
+
+            acciones.append(botonVer, botonDescargar, botonRenombrar, botonEliminar);
+            elemento.append(informacion, acciones);
+            listaArchivos.appendChild(elemento);
+        });
+    } catch (error) {
+        listaArchivos.textContent = `❌ ${error.message}`;
+    }
+}
+
+async function abrirArchivo(id, descargar) {
+    try {
+        const accion = descargar ? "descargar" : "ver";
+        const response = await fetch(`/archivos/${id}/${accion}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("No se pudo abrir el archivo.");
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        if (descargar) {
+            const enlace = document.createElement("a");
+            enlace.href = url;
+            enlace.download = `archivo-${id}`;
+            enlace.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } else {
+            window.open(url, "_blank");
+        }
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function renombrarArchivo(archivo) {
+    const nuevoNombre = prompt("Escribe el nuevo nombre:", archivo.nombre);
+    if (nuevoNombre === null) return;
+
+    if (!nuevoNombre.trim()) {
+        alert("El nombre no puede quedar vacío.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/archivos/${archivo.id}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ nombre: nuevoNombre.trim() })
+        });
+
+        const respuesta = await response.json();
+        if (!response.ok) throw new Error(respuesta.message || "No se pudo cambiar el nombre.");
+
+        await cargarArchivos();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function eliminarArchivo(archivo) {
+    if (!confirm(`¿Quieres eliminar "${archivo.nombre}"?`)) return;
+
+    try {
+        const response = await fetch(`/archivos/${archivo.id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const respuesta = await response.json();
+        if (!response.ok) throw new Error(respuesta.message || "No se pudo eliminar el archivo.");
+
+        await cargarArchivos();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+formUpload.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const archivo = inputArchivo.files[0];
+    if (!archivo) {
+        resultadoUpload.textContent = "❌ Selecciona un archivo.";
+        return;
+    }
+
+    const tiposPermitidos = ["image/jpeg", "image/png", "application/pdf"];
+
+    if (archivo.size > 5 * 1024 * 1024) {
+        resultadoUpload.textContent = "❌ El archivo supera los 5 MB.";
+        return;
+    }
+
+    if (!tiposPermitidos.includes(archivo.type)) {
+        resultadoUpload.textContent = "❌ Solo se permiten JPG, PNG o PDF.";
+        return;
+    }
+
+    const formulario = new FormData();
+    formulario.append("archivo", archivo);
+    formulario.append("nombre", inputNombreArchivo.value.trim() || archivo.name);
+
+    resultadoUpload.textContent = "Subiendo archivo...";
+
+    try {
+        const response = await fetch("/upload", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formulario
+        });
+
+        const respuesta = await response.json();
+        if (!response.ok) throw new Error(respuesta.message || "No se pudo subir el archivo.");
+
+        resultadoUpload.textContent = "✅ ¡Archivo guardado correctamente!";
+        formUpload.reset();
+        await cargarArchivos();
+    } catch (error) {
+        resultadoUpload.textContent = `❌ ${error.message}`;
+    }
+});
+
+cargarArchivos();
+
+// ==========================================
+// MI MOCHILA: LISTA DE MATERIALES
+// ==========================================
+const formMochila = document.getElementById("formMochila");
+const inputMaterial = document.getElementById("nuevoMaterial");
+const listaMochila = document.getElementById("listaMochila");
+const resultadoMochila = document.getElementById("resultadoMochila");
+
+const claveMateriales =
+    `materialesMochila_${usuarioActual.id || usuarioActual.email || "usuario"}`;
+
+let materiales = JSON.parse(localStorage.getItem(claveMateriales) || "[]");
+
+function guardarMateriales() {
+    localStorage.setItem(claveMateriales, JSON.stringify(materiales));
+}
+
+function mostrarMateriales() {
+    listaMochila.innerHTML = "";
+
+    if (materiales.length === 0) {
+        listaMochila.innerHTML = `
+            <p class="sin-materiales">
+                🎒 Tu mochila está vacía.
+                ¡Agrega lo que necesitas para el colegio!
+            </p>`;
+        return;
+    }
+
+    const contador = document.createElement("p");
+    contador.className = "contador-materiales";
+
+    const listos = materiales.filter(item => item.listo).length;
+    contador.textContent = `✅ ${listos} de ${materiales.length} materiales preparados`;
+    listaMochila.appendChild(contador);
+
+    materiales.forEach(item => {
+        const tarjeta = document.createElement("article");
+        tarjeta.className = "material-item";
+
+        if (item.listo) tarjeta.classList.add("material-listo");
+
+        const fila = document.createElement("div");
+        fila.className = "material-fila";
+
+        const casilla = document.createElement("input");
+        casilla.type = "checkbox";
+        casilla.checked = Boolean(item.listo);
+        casilla.setAttribute("aria-label", `Marcar ${item.nombre} como preparado`);
+
+        casilla.addEventListener("change", () => {
+            item.listo = casilla.checked;
+            guardarMateriales();
+            mostrarMateriales();
+        });
+
+        const nombre = document.createElement("span");
+        nombre.className = "material-nombre";
+        nombre.textContent = item.nombre;
+        fila.append(casilla, nombre);
+
+        const acciones = document.createElement("div");
+        acciones.className = "acciones-material";
+
+        const botonEditar = document.createElement("button");
+        botonEditar.type = "button";
+        botonEditar.textContent = "✏️ Editar";
+        botonEditar.className = "btn-editar-material";
+
+        botonEditar.addEventListener("click", () => {
+            const nuevoNombre = prompt("¿Qué material quieres llevar?", item.nombre);
+            if (nuevoNombre === null) return;
+
+            if (!nuevoNombre.trim()) {
+                alert("Escribe el nombre del material.");
+                return;
+            }
+
+            item.nombre = nuevoNombre.trim();
+            guardarMateriales();
+            mostrarMateriales();
+        });
+
+        const botonEliminar = document.createElement("button");
+        botonEliminar.type = "button";
+        botonEliminar.textContent = "🗑️";
+        botonEliminar.className = "btn-eliminar-material";
+        botonEliminar.setAttribute("aria-label", `Eliminar ${item.nombre}`);
+
+        botonEliminar.addEventListener("click", () => {
+            if (!confirm(`¿Eliminar "${item.nombre}" de tu mochila?`)) return;
+
+            materiales = materiales.filter(material => material.id !== item.id);
+            guardarMateriales();
+            mostrarMateriales();
+        });
+
+        acciones.append(botonEditar, botonEliminar);
+        tarjeta.append(fila, acciones);
+        listaMochila.appendChild(tarjeta);
+    });
+}
+
+formMochila.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const nombre = inputMaterial.value.trim();
+
+    if (!nombre) {
+        resultadoMochila.textContent = "✏️ Escribe qué necesitas llevar.";
+        return;
+    }
+
+    materiales.push({
+        id: Date.now().toString() + Math.random().toString(16).slice(2),
+        nombre,
+        listo: false
+    });
+
+    guardarMateriales();
+    mostrarMateriales();
+
+    resultadoMochila.textContent = "🎒 ¡Material agregado!";
+    formMochila.reset();
+    inputMaterial.focus();
+});
+
+mostrarMateriales();
+</script>
+
+<footer class="pie-pagina">
+    <p>Desarrollado con 💜 por <strong>María Magdalena Retamales</strong></p>
+    <p>© 2026 Mi Mochila</p>
+</footer>
+
+</body>
+</html>
